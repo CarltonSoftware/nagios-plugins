@@ -14,7 +14,7 @@ cloudwatch = boto3.client('cloudwatch')
 
 class TGInstanceMetric(nagiosplugin.Resource):
 
-    def __init__(self, target_group_arn, metric_name, statistic='Average', period=60):
+    def __init__(self, target_group_arn, metric_name, statistic, period):
         self.target_group_arn = target_group_arn
         self.metric_name = metric_name
         self.period = period
@@ -52,15 +52,15 @@ class TGInstanceMetric(nagiosplugin.Resource):
 
         return instance_ids
 
-    def get_most_recent_data_point(self, instance_id, metric_name, statistic):
+    def get_most_recent_data_point(self, instance_id, metric_name, statistic, period):
         most_recent_timestamp = datetime.datetime(1970, 1, 1)
         most_recent_reading = ''
 
-        data_points = self.get_recent_data_points(instance_id, metric_name, statistic)
+        data_points = self.get_recent_data_points(instance_id, metric_name, statistic, period)
         for data_point in data_points:
             if (data_point['Timestamp'].replace(tzinfo=None) > most_recent_timestamp):
                 most_recent_timestamp = data_point['Timestamp'].replace(tzinfo=None)
-                most_recent_reading = data_point['Average']
+                most_recent_reading = data_point[statistic]
 
         return most_recent_reading
 
@@ -99,11 +99,15 @@ def main():
                       help='return warning if load is outside RANGE')
     argp.add_argument('-c', '--critical', metavar='RANGE', default='',
                       help='return critical if load is outside RANGE')
+    argp.add_argument('-p', '--period', metavar='PERIOD', default=60, type=int,
+                      help='metric resolution in seconds')
+    argp.add_argument('-s', '--statistic', metavar='Average/Minimum/etc', default='Average',
+                    help='statistic to monitor')
     args = argp.parse_args()
 
     # Perform the check
     check = nagiosplugin.Check(
-        TGInstanceMetric(args.targetgroup, args.metric),
+        TGInstanceMetric(args.targetgroup, args.metric, args.statistic, args.period),
         nagiosplugin.ScalarContext(args.metric, args.warning, args.critical),
         TGInstanceMetricSummary()
     )

@@ -66,7 +66,6 @@ class TGInstanceMetric(nagiosplugin.Resource):
         volume_ids = []
         for instance in response['Reservations'][0]['Instances']:
             for volume in instance['BlockDeviceMappings']:
-                print(volume['DeviceName'])
                 if volume['DeviceName'] == volume_name:
                     volume_ids.append(volume['Ebs']['VolumeId'])
 

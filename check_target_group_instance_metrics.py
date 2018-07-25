@@ -64,10 +64,11 @@ class TGInstanceMetric(nagiosplugin.Resource):
         )
 
         volume_ids = []
-        for instance in response['Reservations'][0]['Instances']:
-            for volume in instance['BlockDeviceMappings']:
-                if volume['DeviceName'] == volume_name:
-                    volume_ids.append(volume['Ebs']['VolumeId'])
+        for reservation in response['Reservations']:
+            for instance in reservation['Instances']:
+                for volume in instance['BlockDeviceMappings']:
+                    if volume['DeviceName'] == volume_name:
+                        volume_ids.append(volume['Ebs']['VolumeId'])
 
         return volume_ids
 
@@ -116,6 +117,7 @@ class TGInstanceMetric(nagiosplugin.Resource):
             Period = period,
             Statistics = [ statistic ]
         )
+
         return response['Datapoints']
 
 

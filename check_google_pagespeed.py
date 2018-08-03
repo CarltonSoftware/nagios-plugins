@@ -14,17 +14,19 @@ class GooglePageSpeedMetric(nagiosplugin.Resource):
     # Perform the service check
     # Returns a nagiosplugin.Metric for each instance in the Target Group
     def probe(self):
-        pagespeed_url = 'https://www.googleapis.com/pagespeedonline/v1/runPagespeed?key=' + api_key + '&url=' + self.url + '&strategy=' + self.strategy
+        pagespeed_url = 'https://www.googleapis.com/pagespeedonline/v4/runPagespeed?key=' + api_key + '&url=' + self.url + '&strategy=' + self.strategy
 
         request = urllib.request.Request(pagespeed_url)
         result = urllib.request.urlopen(request)
         body = result.read().decode("utf-8")
         results = json.loads(body)
-        print(results)
 
         return [
-            nagiosplugin.Metric('score', results['score'], min=0, max=100),
+            nagiosplugin.Metric('score', results['ruleGroups']['SPEED']['score'], min=0, max=100),
+            nagiosplugin.Metric('firstContentfulPaintMs', results['loadingExperience']['metrics']['FIRST_CONTENTFUL_PAINT_MS']['median'], min=0, context='default'),
+            nagiosplugin.Metric('domContentLoadedEventFiredMs', results['loadingExperience']['metrics']['DOM_CONTENT_LOADED_EVENT_FIRED_MS']['median'], min=0, context='default'),
             nagiosplugin.Metric('numberResources', results['pageStats']['numberResources'], min=0, context='default'),
+            nagiosplugin.Metric('numberHosts', results['pageStats']['numberHosts'], min=0, context='default'),
             nagiosplugin.Metric('totalRequestBytes', int(results['pageStats']['totalRequestBytes']), min=0, context='default'),
             nagiosplugin.Metric('numberStaticResources', results['pageStats']['numberStaticResources'], min=0, context='default'),
             nagiosplugin.Metric('htmlResponseBytes', int(results['pageStats']['htmlResponseBytes']), min=0, context='default'),
@@ -34,7 +36,9 @@ class GooglePageSpeedMetric(nagiosplugin.Resource):
             nagiosplugin.Metric('javascriptResponseBytes', int(results['pageStats']['javascriptResponseBytes']), min=0, context='default'),
             nagiosplugin.Metric('otherResponseBytes', int(results['pageStats']['otherResponseBytes']), min=0, context='default'),
             nagiosplugin.Metric('numberJsResources', results['pageStats']['numberJsResources'], min=0, context='default'),
-            nagiosplugin.Metric('numberCssResources', results['pageStats']['numberCssResources'], min=0, context='default')
+            nagiosplugin.Metric('numberCssResources', results['pageStats']['numberCssResources'], min=0, context='default'),
+            nagiosplugin.Metric('numTotalRoundTrips', results['pageStats']['numTotalRoundTrips'], min=0, context='default'),
+            nagiosplugin.Metric('numRenderBlockingRoundTrips', results['pageStats']['numRenderBlockingRoundTrips'], min=0, context='default')
         ]
 
 
